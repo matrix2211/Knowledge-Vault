@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Knowledge Vault</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h2>📂 Files</h2>
+    <div id="fileList" class="file-list">
+      <div class="file muted">No files uploaded</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+    <div class="top-left">
+        <input type="file" id="fileInput" />
+        <button onclick="uploadFile()">Upload</button>
+        <span id="uploadStatus"></span>
+    </div>
+
+    <div class="top-right" id="selectedFileBar">
+        Selected file: <span class="file-name">None</span>
+    </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat" id="chatContainer">
+      <div class="message ai">
+        Upload a document and ask me anything about it.
+      </div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-bar">
+      <input
+        type="text"
+        id="questionInput"
+        placeholder="Ask a question..."
+        onkeydown="handleEnter(event)"
+      />
+      <button onclick="askQuestion()">Send</button>
+    </div>
+
+  </main>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
