@@ -1,0 +1,38 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# -------------------------
+# Virtual Environment
+# -------------------------
+venv/
+.env/
+
+# -------------------------
+# OS / Editor
+# -------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Keep folders but ignore contents
+!data/documents/.gitkeep
+!data/faiss_index/.gitkeep
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+
+# -------------------------
+# Frontend
+# -------------------------
+node_modules/
