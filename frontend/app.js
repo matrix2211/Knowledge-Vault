@@ -5,15 +5,9 @@ const chatContainer = document.getElementById("chatContainer");
 const questionInput = document.getElementById("questionInput");
 const uploadStatus = document.getElementById("uploadStatus");
 const fileList = document.getElementById("fileList");
-const selectedFileBar = document.querySelector(
-  "#selectedFileBar .file-name"
-);
-
-
-let selectedFile = null;
 
 /* -----------------------------
-   FILE SIDEBAR
+   FILE SIDEBAR (READ-ONLY)
 --------------------------------*/
 
 async function fetchFiles() {
@@ -34,35 +28,21 @@ function renderFiles(files) {
     return;
   }
 
-  files.forEach(file => {
+  files.forEach((file) => {
     const div = document.createElement("div");
     div.className = "file";
     div.textContent = file;
-
-    if (file === selectedFile) {
-      div.classList.add("active");
-    }
-
-    div.onclick = () => {
-        selectedFile = file;
-        selectedFileBar.textContent = file;   // ✅ update top bar
-        renderFiles(files);
-    };
-
-
     fileList.appendChild(div);
   });
 }
 
 /* -----------------------------
-   UPLOAD
+   UPLOAD (MULTI-FILE READY)
 --------------------------------*/
 
 async function uploadFile() {
   const fileInput = document.getElementById("fileInput");
   if (!fileInput.files.length) return;
-
-  const uploadedFileName = fileInput.files[0].name;
 
   const formData = new FormData();
   formData.append("file", fileInput.files[0]);
@@ -72,15 +52,16 @@ async function uploadFile() {
   try {
     const res = await fetch(`${API_BASE}/upload`, {
       method: "POST",
-      body: formData
+      body: formData,
     });
 
     const data = await res.json();
-    uploadStatus.textContent = data.status || "Uploaded";
+    if (!res.ok) {
+      uploadStatus.textContent = "Upload failed";
+      return;
+    }
 
-    // ✅ auto-select uploaded file
-    selectedFile = uploadedFileName;
-    selectedFileBar.textContent = uploadedFileName;
+
     await fetchFiles();
   } catch {
     uploadStatus.textContent = "Upload failed";
@@ -88,7 +69,7 @@ async function uploadFile() {
 }
 
 /* -----------------------------
-   CHAT
+   CHAT (GLOBAL SEARCH)
 --------------------------------*/
 
 function addMessage(text, type, sources = []) {
@@ -120,10 +101,7 @@ async function askQuestion() {
   chatContainer.appendChild(thinking);
 
   try {
-    let url = `${API_BASE}/ask?q=${encodeURIComponent(q)}`;
-    if (selectedFile) {
-      url += `&file=${encodeURIComponent(selectedFile)}`;
-    }
+    const url = `${API_BASE}/ask?q=${encodeURIComponent(q)}`;
 
     const res = await fetch(url);
     const data = await res.json();

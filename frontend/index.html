@@ -23,21 +23,22 @@
 
     <!-- TOP BAR -->
     <div class="top-bar">
-    <div class="top-left">
-        <input type="file" id="fileInput" />
+      <div class="top-left">
+        <input type="file" id="fileInput" accept=".pdf,.docx,.xlsx,.csv" /> 
         <button onclick="uploadFile()">Upload</button>
         <span id="uploadStatus"></span>
-    </div>
+      </div>
 
-    <div class="top-right" id="selectedFileBar">
-        Selected file: <span class="file-name">None</span>
-    </div>
+      <!-- UX CHANGE: No selected file -->
+      <div class="top-right">
+        <span class="file-name">🔍 Searching across all uploaded files</span>
+      </div>
     </div>
 
     <!-- CHAT -->
     <div class="chat" id="chatContainer">
       <div class="message ai">
-        Upload a document and ask me anything about it.
+        Upload documents and ask questions across your entire knowledge vault.
       </div>
     </div>
 
@@ -46,7 +47,7 @@
       <input
         type="text"
         id="questionInput"
-        placeholder="Ask a question..."
+        placeholder="Ask a question across all documents..."
         onkeydown="handleEnter(event)"
       />
       <button onclick="askQuestion()">Send</button>
