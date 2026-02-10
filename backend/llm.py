@@ -1,16 +1,56 @@
-import requests
+import os
+from dotenv import load_dotenv
+from google import genai
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "llama3.1:latest"
+load_dotenv()
+
+# Initialize Gemini client
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+
+def _call_gemini(prompt: str) -> str:
+    """
+    Internal Gemini call with safety fallback.
+    """
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt,
+        )
+
+        if response and response.text:
+            return response.text.strip()
+
+        return "Not found in Knowledge Vault."
+
+    except Exception as e:
+        print(f"[LLM ERROR] {e}")
+        return "Not found in Knowledge Vault."
+
 
 def generate_answer(prompt: str) -> str:
-    payload = {
-        "model": MODEL,
-        "prompt": prompt,
-        "stream": False
-    }
+    """
+    Generate a grounded answer for RAG.
+    """
+    return _call_gemini(prompt)
 
-    response = requests.post(OLLAMA_URL, json=payload)
-    response.raise_for_status()
 
-    return response.json()["response"]
+def generate_summary(text: str) -> str:
+    """
+    Generate a concise document summary.
+    Used for document-level retrieval.
+    """
+    prompt = f"""
+Summarize the following document content in 5–7 bullet points.
+Focus on key topics and definitions.
+Do NOT add information not present in the text.
+
+Document:
+----------------
+{text}
+----------------
+
+Summary:
+""".strip()
+
+    return _call_gemini(prompt)

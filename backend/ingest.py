@@ -1,11 +1,15 @@
-from pypdf import PdfReader
+import os
+import uuid
+from typing import List
+
 from embeddings import embed_texts
 from vector_store import VectorStore
-import os
+from summaries import DocumentSummaryStore
+from loaders import load_file   # ✅ NEW
 
 
 # -------- TEXT CHUNKING --------
-def chunk_text(text, chunk_size=500, overlap=100):
+def chunk_text(text: str, chunk_size: int = 500, overlap: int = 100) -> List[str]:
     chunks = []
     start = 0
     text = text.replace("\x00", "").strip()
@@ -22,53 +26,59 @@ def chunk_text(text, chunk_size=500, overlap=100):
     return chunks
 
 
-# -------- PDF INGESTION --------
-def ingest_pdf(path: str):
+# -------- GENERIC FILE INGESTION --------
+def ingest_file(path: str) -> None:
     if not os.path.exists(path):
         print(f"[ERROR] File not found: {path}")
         return
 
     try:
-        reader = PdfReader(path)
+        full_text = load_file(path)   # ✅ GENERIC LOADER
     except Exception as e:
-        print(f"[ERROR] Failed to read PDF {path}: {e}")
+        print(f"[ERROR] Failed to read {path}: {e}")
         return
 
-    full_text = ""
-
-    for page in reader.pages:
-        try:
-            page_text = page.extract_text()
-            if page_text:
-                full_text += page_text + "\n"
-        except Exception:
-            continue
-
-    # 🚫 HARD GUARD: scanned / junk PDFs
     if len(full_text.strip()) < 50:
-        print(f"[WARN] {path} has very little extractable text. Skipping ingestion.")
+        print(f"[WARN] {os.path.basename(path)} has very little text. Skipping.")
         return
 
     chunks = chunk_text(full_text)
-
     if not chunks:
-        print(f"[WARN] No valid chunks created for {path}")
         return
 
-    embeddings = embed_texts(chunks)
+    doc_id = str(uuid.uuid4())
+    file_name = os.path.basename(path)
 
-    store = VectorStore(dim=len(embeddings[0]))
+    embeddings = embed_texts(chunks)
+    store = VectorStore()
 
     metadatas = [
         {
-            "text": chunk,
-            "source": path.replace("\\", "/"),
-            "embedding": emb.tolist()
+            "doc_id": doc_id,
+            "file_name": file_name,
+            "source": file_name,
+            "chunk_id": i,
         }
-        for chunk, emb in zip(chunks, embeddings)
-    ]   
+        for i in range(len(chunks))
+    ]
+
+    store.add(
+        embeddings=embeddings,
+        documents=chunks,
+        metadatas=metadatas,
+    )
+
+    summary_store = DocumentSummaryStore()
+    summary_store.add_summary(
+        doc_id=doc_id,
+        file_name=file_name,
+        full_text=full_text,
+    )
+
+    print(f"[INFO] Ingested {len(chunks)} chunks from {file_name}")
 
 
-    store.add(embeddings, metadatas)
-
-    print(f"[INFO] Ingested {len(chunks)} chunks from {os.path.basename(path)}")
+# -------- MULTI-FILE INGESTION --------
+def ingest_files(paths: List[str]) -> None:
+    for path in paths:
+        ingest_file(path)
